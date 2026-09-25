@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RainShield AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background-color: #0b0f19; color: #fff; padding: 20px; text-align: center; }
+    .container { max-width: 400px; margin: auto; }
+    h1 { color: #38bdf8; font-size: 24px; margin-bottom: 6px; }
+    .signal-circle {
+      width: 140px; height: 140px; border-radius: 50%;
+      margin: 16px auto; display: flex; align-items: center;
+      justify-content: center; font-size: 48px;
+    }
+    .safe { background: #16a34a; box-shadow: 0 0 30px #22c55e; }
+    .watch { background: #d97706; box-shadow: 0 0 30px #f59e0b; }
+    .danger { background: #dc2626; box-shadow: 0 0 35px #ef4444; }
+    .status-title { font-size: 22px; font-weight: bold; margin-bottom: 12px; }
+    .audio-btn {
+      width: 100%; background: #0284c7; color: white; border: none;
+      padding: 16px; border-radius: 12px; font-size: 17px; font-weight: bold;
+      cursor: pointer; margin: 16px 0;
+    }
+    .card { background: #1e293b; padding: 16px; border-radius: 12px; font-size: 15px; border: 1px solid #334155; text-align: left; line-height: 1.5; }
+  </style>
+</head>
+<body onload="initWeather()">
+  <div class="container">
+    <h1>🌧️ RainShield AI</h1>
+    <p style="color:#94a3b8; font-size:13px; margin-bottom:15px;">Community Live Rain Resilience</p>
+    <div id="signal" class="signal-circle safe">🟢</div>
+    <div id="status-title" class="status-title" style="color: #22c55e;">SURAKSHIT (HARA)</div>
+    <button class="audio-btn" onclick="speakStatus()">🔊 Aawaz Mein Sunein</button>
+    <div class="card">
+      <div id="advisory-text">Mausam saaf hai. Dukaan, thela aur aam kaam bina chinta ke chalu rakhein.</div>
+    </div>
+  </div>
+  <script>
+    let currentSpeech = "Mausam bilkul saaf hai. Hara signal hai, koi khatra nahi.";
+    function speakStatus() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(currentSpeech);
+        utter.lang = 'hi-IN';
+        window.speechSynthesis.speak(utter);
+      }
+    }
+    async function initWeather() {
+      try {
+        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=23.74&longitude=86.82&current=precipitation,rain&forecast_days=1");
+        const data = await res.json();
+        const rain = data.current?.rain || 0.1;
+        const score = Math.round(Math.min(30, (rain / 25.0) * 30) + 15);
+        const sig = document.getElementById('signal');
+        const tit = document.getElementById('status-title');
+        const adv = document.getElementById('advisory-text');
+        if (score < 25) {
+          sig.className = "signal-circle safe"; sig.innerText = "🟢";
+          tit.style.color = "#22c55e"; tit.innerText = "SURAKSHIT (HARA)";
+          adv.innerText = "Mausam saaf hai. Dukaan aur aam kaam bina chinta ke chalu rakhein.";
+          currentSpeech = "Mausam bilkul saaf hai. Hara signal hai, koi khatra nahi.";
+        } else if (score < 50) {
+          sig.className = "signal-circle watch"; sig.innerText = "🟡";
+          tit.style.color = "#f59e0b"; tit.innerText = "SACHET (PEELA)";
+          adv.innerText = "Halki barish ki sambhavna. Rehedi-patri aur samaan tirpal se dhaanp kar rakhein.";
+          currentSpeech = "Dhyan dein, peela signal hai. Halki barish ho sakti hai, tirpal taiyar rakhein.";
+        } else {
+          sig.className = "signal-circle danger"; sig.innerText = "🔴";
+          tit.style.color = "#ef4444"; tit.innerText = "KHATRA (LAAL)";
+          adv.innerText = "Bhari barish aur paani bharne ka khatra! Unchi jagah par jayein.";
+          currentSpeech = "Khatra hai, laal signal dikh raha hai. Bhari barish ka anuman hai.";
+        }
+      } catch(e) {}
+    }
+  </script>
+</body>
+</html>
